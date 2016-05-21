@@ -1,0 +1,4 @@
+<plugin>
+  <name>inverse-macros-plugin</name>
+  <classname>inverse_macros.Plugin</classname>
+</plugin>
