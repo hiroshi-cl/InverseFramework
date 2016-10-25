@@ -21,14 +21,19 @@ object build extends Build {
     parallelExecution in Test := false,
     logBuffered := false,
     scalaOrganization := "org.scala-lang",
-    scalaVersion := "2.11.7",
-    crossScalaVersions := Seq("2.11.7", "2.12.0-M3"),
+    scalaVersion := "2.11.8",
+    crossScalaVersions := Seq("2.11.8", "2.12.0-RC2"),
     crossVersion := CrossVersion.full,
     scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked", "-explaintypes"),
-    scalacOptions ++= Seq("-Xlint", "-Yinline-warnings"),
+    scalacOptions <++= scalaVersion map { ver =>
+      if (ver startsWith "2.12.0")
+        Seq("-Xlint")
+      else
+        Seq("-Xlint", "-Yinline-warnings")
+    },
     scalacOptions <+= scalaVersion map { ver =>
       if (ver startsWith "2.12.0")
-        "-Yopt:l:classpath"
+        "-opt:l:classpath"
       else
         "-optimise"
     },
@@ -36,13 +41,9 @@ object build extends Build {
     libraryDependencies <++= (scalaOrganization, scalaVersion) { (org, ver) => Seq(
       org % "scala-compiler" % ver,
       org % "scala-library" % ver,
-      org % "scala-reflect" % ver, {
-        if (ver == "2.12.0-M3")
-          "org.scalatest" %% "scalatest" % "2.2.5-M3" % Test
-        else
-          "org.scalatest" %% "scalatest" % "2.2.6" % Test
-      },
-      "org.scalacheck" %% "scalacheck" % "1.12.5" % Test
+      org % "scala-reflect" % ver,
+      "org.scalatest" %% "scalatest" % "3.0.0" % Test,
+      "org.scalacheck" %% "scalacheck" % "1.13.3" % Test
     )
     },
     libraryDependencies += "junit" % "junit" % "4.12" % Test
