@@ -1,9 +1,6 @@
-import Implicits._
 
-lazy val root = project.aggregated(".")(core, test, dsl)
+lazy val root = project.aggregated(".")(core, test, dsl).settings(name := "inverse framework")
 
-val core_plugin = project.compilerPlugin("plugin").dependsOnParadise.setDefaultCorePlugin()
-val core_engine = project.imEngine("engine").usesParadise.setDefaultCoreEngine()
 lazy val core = project.aggregated("core")(core_plugin, core_engine)
 
 lazy val test = project.aggregated("test")(
@@ -51,7 +48,6 @@ lazy val dsl_lazys         = project.dsl("lazys")
 lazy val dsl_monads        = project.dsl("monads")
 lazy val dsl_skipto        = project.dsl("skipto")
 
-val experiments_common = project.common("experiments", "common").setExperimentsCommon()
 lazy val experiments = project.aggregated("experiments")(
   experiments_delimcc_continuations,
   experiments_delimcc_scala_util,

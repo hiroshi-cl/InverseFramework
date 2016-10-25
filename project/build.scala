@@ -4,6 +4,10 @@ import sbtassembly.AssemblyPlugin.autoImport._
 
 object build extends Build {
 
+  val core_plugin = project.compilerPlugin("plugin").dependsOnParadise
+  val core_engine = project.imEngine("engine").usesParadise
+  val experiments_common = project.common("experiments", "common")
+
   lazy val sharedSettings = Defaults.coreDefaultSettings ++ Seq(
     organization := "jp.ac.u_tokyo.i.ci.csg.hiroshi_yamaguchi",
     version := "3.0.0-SNAPSHOT",
@@ -75,10 +79,9 @@ object build extends Build {
 
     def imEngine(name: String): Project = common("core", name).hasArtifact.usesParadise
 
-    def imEngineTest(name: String)(implicit plugin: Project @@ CorePlugin, engine: Project @@ CoreEngine): Project =
-      common("test", name).usesInverseMacros
+    def imEngineTest(name: String): Project = common("test", name).usesInverseMacros
 
-    def paradiseTest(name: String)(implicit plugin: Project @@ CorePlugin, engine: Project @@ CoreEngine): Project =
+    def paradiseTest(name: String): Project =
       imEngineTest(name).settings(
         unmanagedSourceDirectories in Test <<= (scalaSource in Test) { (root: File) =>
           val (anns :: Nil, others) = root.listFiles.toList.partition(_.getName == "annotations")
@@ -94,11 +97,11 @@ object build extends Build {
         }
       )
 
-    def dsl(name: String)(implicit plugin: Project @@ CorePlugin, engine: Project @@ CoreEngine): Project =
+    def dsl(name: String): Project =
       common("dsl", name).usesInverseMacros.hasArtifact
 
-    def experiment(experimentName: String, packageName: String)(implicit common: Project @@ ExperimentsCommon): Project =
-      project.in(file("experiments") / packageName / experimentName).dependsOn(common : Project).
+    def experiment(experimentName: String, packageName: String): Project =
+      project.in(file("experiments") / packageName / experimentName).dependsOn(experiments_common).
         settings(sharedSettings: _*).
         settings(
           crossScalaVersions := Seq("2.11.7"),
@@ -107,12 +110,11 @@ object build extends Build {
           mainClass in assembly := Some(s"$packageName.MicroBench")
         )
 
-    def contExperiment(experimentName: String)(implicit engine: Project @@ CoreEngine, common: Project @@ ExperimentsCommon): Project =
+    def contExperiment(experimentName: String): Project =
       project.experiment(experimentName, "scala.util.continuations").
-        usesContinuation.makeSureOfDependency(engine)
+        usesContinuation.makeSureOfDependency(core_engine)
 
-    def imExperiment(experimentName: String, packageName: String)
-                    (implicit plugin: Project @@ CorePlugin, engine: Project @@ CoreEngine, common: Project @@ ExperimentsCommon): Project =
+    def imExperiment(experimentName: String, packageName: String): Project =
       project.experiment(experimentName, s"inverse_macros.$packageName").usesInverseMacros
 
     //==== auxiliary methods ====
@@ -144,8 +146,8 @@ object build extends Build {
       }
     )
 
-    def usesInverseMacros(implicit plugin: Project @@ CorePlugin, engine: Project @@ CoreEngine): Project =
-      project.usesLocalPlugins(plugin).makeSureOfDependency(engine)
+    def usesInverseMacros: Project =
+      project.usesLocalPlugins(core_plugin).makeSureOfDependency(core_engine)
 
     def usesContinuation: Project = project.settings(
       addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin" % "1.0.2" cross CrossVersion.full),
@@ -165,45 +167,9 @@ object build extends Build {
       publishArtifact := true,
       publishArtifact in Test := false
     )
-
-    def setDefaultCorePlugin(): Project = {
-      Implicits.defaultCorePlugin = project.tag[CorePlugin]
-      project
-    }
-
-    def setDefaultCoreEngine(): Project = {
-      Implicits.defaultCoreEngine = project.tag[CoreEngine]
-      project
-    }
-
-    def setExperimentsCommon(): Project = {
-      Implicits.defaultExperimentsCommon = project.tag[ExperimentsCommon]
-      project
-    }
-
-    def tag[Tag]: Project @@ Tag = project.asInstanceOf[Project @@ Tag]
   }
 
   lazy val CompileOnly = config("compileonly").hide.describedAs("Compile-time only")
-
-  type @@[A, T] = {
-    type Tag = T
-    type Self = A
-  }
-
-  implicit def unwrapTag[A, T](tagged: A @@ T): A = tagged.asInstanceOf[A]
-
-  class CorePlugin
-
-  class CoreEngine
-
-  class ExperimentsCommon
-
-  object Implicits {
-    implicit var defaultCorePlugin: Project @@ CorePlugin = _
-    implicit var defaultCoreEngine: Project @@ CoreEngine = _
-    implicit var defaultExperimentsCommon: Project @@ ExperimentsCommon = _
-  }
 
   concurrentRestrictions in Global := Seq(Tags.exclusive(Tags.Test))
 }
