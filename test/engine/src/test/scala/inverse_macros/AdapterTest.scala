@@ -10,8 +10,8 @@ class AdapterTest extends FunSuite {
     @typeable
     def _0 = List(10).traverse(i => (i + 1).asInstanceOf[Int @traverse])
 
-    @typeable("@inverse_macros.IMEngineApplied def _1: List[Int] = { @inverse_macros.IMLinearizerSynth <synthetic> <artifact> val $$: Int => Int @inverse_macros.traverse = ((i: Int) => i.+(1).asInstanceOf[Int @inverse_macros.traverse]); AdapterTest.Traverse[Int](immutable.this.List.apply[Int](10)).traverse[Int]($$) }")
-    def _1 = List(10).map(i => (i + 1).asInstanceOf[Int @traverse])
+    @typeable
+    def _1 = scala.collection.immutable.List(10).map(i => (i + 1).asInstanceOf[Int @traverse])
 
     assert(List(10).map(i => (i + 1).asInstanceOf[Int @traverse]) == List(11))
   }

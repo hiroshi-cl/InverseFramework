@@ -32,7 +32,7 @@ class MiscTest extends FunSuite {
   }
 
   test("lazy") {
-    @typeable("@inverse_macros.IMEngineApplied def piyo: Unit = { lazy <artifact> var hoge$lzy: Int = _; <stable> <accessor> lazy def hoge: Int = { hoge$lzy = 10; hoge$lzy }; { hoge; () } }")
+    @typeable
     def piyo: Unit = {
       lazy val hoge = 10
       hoge
