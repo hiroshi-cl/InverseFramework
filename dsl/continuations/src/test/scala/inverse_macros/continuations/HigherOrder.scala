@@ -16,12 +16,7 @@ class HigherOrder extends JUnitSuite  {
   @Test def t5472 = {
     val map = Map("foo" -> 1, "bar" -> 2)
     reset[Unit,Unit] {
-      val mapped =
-        for {
-          (location, accessors) <- new ContinuationizedParallelIterable(map)
-        } yield {
-          shiftUnit0[Int, Unit](23)
-        }
+      val mapped = new ContinuationizedParallelIterable(map).map(strIntTpl => shiftUnit0[Int, Unit](23))
       assertEquals(List(23, 23), mapped.toList)
     }
   }
